@@ -1,23 +1,23 @@
 import socket
 from threading import Thread
 
-# server's IP address and port number
+# server'server_socket IP address and port number
 # Currently local host, change to IP of device on network so 
 # that any device on the network can connect
 SERVER_HOST = "0.0.0.0"
 SERVER_PORT = 5002
-separator_token = "<SEP>" # we will use this to separate the client name & message
+separator_token = "<COL>" # we will use this to separate the client name & message
 
 # Start list of client sockets connected to the server
 client_sockets_list = set()
 # create a TCP socket for the client
-s = socket.socket()
+server_socket = socket.socket()
 # set options for the socket so that it is reusable
-s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 # bind the socket to the server IP and port
-s.bind((SERVER_HOST, SERVER_PORT))
+server_socket.bind((SERVER_HOST, SERVER_PORT))
 # listen for connections from starting a client
-s.listen(5)
+server_socket.listen(5)
 print(f"[*] Listening as {SERVER_HOST}:{SERVER_PORT}")
 
 def listen_for_client(client_socket):
@@ -37,29 +37,29 @@ def listen_for_client(client_socket):
             print(f"[!] Error: {e}")
             client_sockets.remove(client_socket)
         else:
-            # if receive a message, replace the <SEP> 
+            # if receive a message, replace the <COL> 
             # token with ": "
             msg = msg.replace(separator_token, ": ")
         # iterate connected sockets and send the message to each
-        for client_socket in client_sockets:
-            client_socket.send(msg.encode())
+        for client_socket_entry in client_sockets_list:
+            client_socket_entry.send(msg.encode())
 
 
 while True:
     # listen for new socket connections from new clients
-    client_socket, client_address = s.accept()
+    client_socket, client_address = server_socket.accept()
     print(f"[+] {client_address} connected.")
     # add the new socket to list of connected clients
     client_sockets_list.add(client_socket)
     # Spin up a new thread for each new connected client
-    t = Thread(target=listen_for_client, args=(client_socket,))
+    server_thread = Thread(target=listen_for_client, args=(client_socket,))
     # Thread runs in background and closes with end of main program
-    t.daemon = True
+    server_thread.daemon = True
     # start the thread
-    t.start()
+    server_thread.start()
 
 # close client sockets
-for client_socket in client_sockets_list:
-    client_socket.close()
+for client_socket_entry in client_sockets_list:
+    client_socket_entry.close()
 # close server socket
-s.close()
+server_socket.close()

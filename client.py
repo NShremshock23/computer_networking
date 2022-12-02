@@ -23,28 +23,28 @@ client_color = random.choice(colors)
 # that any device on the network can connect
 SERVER_HOST = "0.0.0.0" 
 SERVER_PORT = 5002
-separator_token = "<SEP>" # we will use this to separate the client name & message
+separator_token = "<COL>" # we will use this to separate the client name & message
 
 # initialize TCP socket
-s = socket.socket()
+client_socket = socket.socket()
 print(f"[*] Connecting to {SERVER_HOST}:{SERVER_PORT}...")
 # connect to the server
-s.connect((SERVER_HOST, SERVER_PORT))
+client_socket.connect((SERVER_HOST, SERVER_PORT))
 print("[+] Connected.")
 # Name for the client
 name = input("Enter your name: ")
 
 def listen_for_messages():
     while True:
-        message = s.recv(1024).decode()
+        message = client_socket.recv(1024).decode()
         print("\n" + message)
 
 # create thread that will listen for messages
-t = Thread(target=listen_for_messages)
+client_thread = Thread(target=listen_for_messages)
 # runs in background and ends with main program
-t.daemon = True
+client_thread.daemon = True
 # start
-t.start()
+client_thread.start()
 
 while True:
     # get input to send as message
@@ -57,7 +57,7 @@ while True:
     to_send = f"{client_color}[{date_now}] {name}{separator_token}{to_send}{Fore.RESET}"
     # create the packet
     pkt = TCPPacket(
-        '192.168.1.42',
+        '0.0.0.0',
         20,
         SERVER_HOST, # Server IP
         SERVER_PORT, # Server Port
@@ -65,7 +65,7 @@ while True:
         0b000101001
     )
     pkt_built = pkt.build() # build the packet structure
-    s.sendto(pkt_built, (SERVER_HOST, SERVER_PORT)) # send the pacet to the server
+    client_socket.sendto(pkt_built, (SERVER_HOST, SERVER_PORT)) # send the pacet to the server
 
 # close the socket being used
-s.close()
+client_socket.close()

@@ -1,64 +1,65 @@
 import socket
-import re
 from threading import Thread
 
-# server's IP address
-SERVER_HOST = "0.0.0.0"
-SERVER_PORT = 5002 # port we want to use
+# server's IP address and port number
+# Currently local host, change to IP of device on network so 
+# that any device on the network can connect
+SERVER_HOST = "192.168.86.250"
+SERVER_PORT = 5002
 separator_token = "<SEP>" # we will use this to separate the client name & message
 
-# initialize list of all connected client's sockets
-client_sockets = set()
-# create a TCP socket
+# Start list of client sockets connected to the server
+client_sockets_list = set()
+# create a TCP socket for the client
 s = socket.socket()
-# make the port reusable port
+# set options for the socket so that it is reusable
 s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-# bind the socket to the address we specified
+# bind the socket to the server IP and port
 s.bind((SERVER_HOST, SERVER_PORT))
-# listen for upcoming connections
+# listen for connections from starting a client
 s.listen(5)
 print(f"[*] Listening as {SERVER_HOST}:{SERVER_PORT}")
 
-def listen_for_client(cs):
+def listen_for_client(client_socket):
     """
-    This function keep listening for a message from `cs` socket
-    Whenever a message is received, broadcast it to all other connected clients
+    :param client_socket: socket for client
+    This function listens for packets from the client socket.
+    When a message is received, send it to all connected clients.
     """
     while True:
         try:
-            # keep listening for a message from `cs` socket
-            orig_msg = cs.recv(1024).split(b'\x00')[-1]
-            msg = orig_msg.decode()
+            # listen for packets from passed in socket
+            orig_msg = client_socket.recv(1024).split(b'\x00')[-1]
+            msg = orig_msg.decode() # decode the received message
         except Exception as e:
-            # client no longer connected
-            # remove it from the set
+            # Exception occurs if client is not connected anymore.
+            # in this case remove the client from the list
             print(f"[!] Error: {e}")
-            client_sockets.remove(cs)
+            client_sockets.remove(client_socket)
         else:
-            # if we received a message, replace the <SEP> 
+            # if receive a message, replace the <SEP> 
             # token with ": "
             msg = msg.replace(separator_token, ": ")
-        # iterate over all connected sockets
+        # iterate connected sockets and send the message to each
         for client_socket in client_sockets:
-            # and send the message
             client_socket.send(msg.encode())
 
 
 while True:
-    # we keep listening for new connections all the time
+    # listen for new socket connections from new clients
     client_socket, client_address = s.accept()
     print(f"[+] {client_address} connected.")
-    # add the new connected client to connected sockets
-    client_sockets.add(client_socket)
-    # start a new thread that listens for each client's messages
+    # add the new socket to list of connected clients
+    client_sockets_list.add(client_socket)
+    # Spin up a new thread for each new connected client
     t = Thread(target=listen_for_client, args=(client_socket,))
-    # make the thread daemon so it ends whenever the main thread ends
+    # Thread runs in background and closes with end of main program
     t.daemon = True
     # start the thread
     t.start()
 
 # close client sockets
-for cs in client_sockets:
-    cs.close()
+for client_socket in client_sockets_list:
+    client_socket.close()
 # close server socket
 s.close()

@@ -4,7 +4,7 @@ from threading import Thread
 # server's IP address and port number
 # Currently local host, change to IP of device on network so 
 # that any device on the network can connect
-SERVER_HOST = "192.168.86.250"
+SERVER_HOST = "0.0.0.0"
 SERVER_PORT = 5002
 separator_token = "<SEP>" # we will use this to separate the client name & message
 

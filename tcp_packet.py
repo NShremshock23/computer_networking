@@ -3,7 +3,14 @@ import struct
 import array
 
 def chksum(packet):
-    if len(packet) % 2 != 0:
+    """
+    :param packet: packet after being built using struct:
+    This function calculates the checksum for TCP packet passed to it.
+    It checks for lengths of 16 and then calculates the checksum.
+    This code was created looking throught the source code of Scapy and how
+    Scapy finds the checksum.
+    """
+    if len(packet) % 2 != 0: # check length of the packet
         packet += b'\0'
     res = sum(array.array("H", packet))
     res = (res >> 16) + (res & 0xffff)
@@ -12,11 +19,11 @@ def chksum(packet):
 
 class TCPPacket:
     def __init__(self,
-                 src_host,
-                 src_port,
-                 dst_host,
-                 dst_port,
-                 data,
+                 src_host, # Source IP
+                 src_port, # Source Port
+                 dst_host, # Destination IP
+                 dst_port, # Destination Port
+                 data, # Message to be sent
                  flags=0):
         self.src_host = src_host
         self.src_port = src_port
@@ -26,6 +33,12 @@ class TCPPacket:
         self.flags = flags
 
     def build(self):
+        """
+        This function takes the values used to initialize the class and 
+        then with default values packs them into a binary structure using struct.
+        A packet and psuedo header are created then a checksum is calculated and added.
+        returns the built packet with the checksum
+        """
         packet = struct.pack(
             '!HHIIBBHHH',
             self.src_port,  # Source Port
@@ -47,22 +60,9 @@ class TCPPacket:
             len(packet)                         # TCP Length
         )
 
+        # calculate the checksum and then pack it using struct.
+        # add the checksum with the packet and the data
         checksum = chksum(pseudo_hdr + packet)
         packet = packet[:16] + struct.pack('H', checksum) + packet[18:]
         packet = packet + self.data
         return packet
-
-if __name__ == '__main__':
-    dst = '192.168.1.1'
-
-    pak = TCPPacket(
-        '192.168.1.42',
-        20,
-        dst,
-        666,
-        b'helloworld'  # Merry Christmas!
-    )
-
-    s = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
-
-    s.sendto(pak.build(), (dst, 0))

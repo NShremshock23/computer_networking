@@ -27,12 +27,12 @@ separator_token = "<COL>" # we will use this to separate the client name & messa
 
 # initialize TCP socket
 client_socket = socket.socket()
-print(f"[*] Connecting to {SERVER_HOST}:{SERVER_PORT}...")
+print(f"### Attempting to connect to {SERVER_HOST}:{SERVER_PORT}")
 # connect to the server
 client_socket.connect((SERVER_HOST, SERVER_PORT))
-print("[+] Connected.")
+print("+ Connected to server.")
 # Name for the client
-name = input("Enter your name: ")
+name = input("Enter name: ")
 
 def listen_for_messages():
     while True:

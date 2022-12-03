@@ -18,7 +18,7 @@ server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server_socket.bind((SERVER_HOST, SERVER_PORT))
 # listen for connections from starting a client
 server_socket.listen(5)
-print(f"[*] Listening as {SERVER_HOST}:{SERVER_PORT}")
+print(f"### {SERVER_HOST}:{SERVER_PORT} listening...")
 
 def listen_for_client(client_socket):
     """
@@ -34,7 +34,7 @@ def listen_for_client(client_socket):
         except Exception as e:
             # Exception occurs if client is not connected anymore.
             # in this case remove the client from the list
-            print(f"[!] Error: {e}")
+            print(f"Error: {e}")
             client_sockets.remove(client_socket)
         else:
             # if receive a message, replace the <COL> 
@@ -48,7 +48,7 @@ def listen_for_client(client_socket):
 while True:
     # listen for new socket connections from new clients
     client_socket, client_address = server_socket.accept()
-    print(f"[+] {client_address} connected.")
+    print(f"+ {client_address} connected.")
     # add the new socket to list of connected clients
     client_sockets_list.add(client_socket)
     # Spin up a new thread for each new connected client
